@@ -1,11 +1,25 @@
 package store
 
-type MetaDB struct {
-	hostURL  string
-	password string
-	port     string
-}
+import (
+	"database/sql"
+	"time"
 
-func (db *MetaDB) Connection() {
-	
+	_ "github.com/jackc/pgx/v5/stdlib"
+)
+
+func Connection(connectionString string, maxActCnn int, maxIdlCnn int, maxCnnTime int) (*sql.DB, error, string) {
+	db, err := sql.Open("pgx", connectionString)
+	if err != nil {
+		return nil, err, "FAILED"
+	}
+	db.SetMaxOpenConns(maxActCnn)
+	db.SetMaxIdleConns(maxIdlCnn)
+	db.SetConnMaxLifetime(time.Duration(maxCnnTime) * time.Minute)
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err, "FAILED"
+	}
+
+	return db, nil, "SUCCESS"
 }
